@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.youle.dao.ICheckGroupDao">
+
+    <resultMap id="baseResultMap" type="com.youle.pojo.CheckGroup">
+        <id property="id" column="id"></id>
+        <result property="code" column="code"></result>
+        <result property="name" column="name"></result>
+        <result property="helpCode" column="helpCode"></result>
+        <result property="sex" column="sex"></result>
+        <result property="remark" column="remark"></result>
+        <result property="attention" column="attention"></result>
+    </resultMap>
+
+    <resultMap id="findByIdResultMap" type="com.youle.pojo.CheckGroup" extends="baseResultMap">
+        <collection property="checkItems" ofType="com.youle.pojo.CheckItem"
+                    select="com.youle.dao.ICheckItemDao.findByCheckItemByCheckGroupId" column="id">
+
+        </collection>
+    </resultMap>
+
+
+    <insert id="add" parameterType="com.youle.pojo.CheckGroup">
+        <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into t_checkgroup(code,name,helpCode,sex,remark,attention) values  (#{code},#{name},#{helpCode},#{sex},#{remark},#{attention})
+    </insert>
+
+    <insert id="addCheckGroupAndCheckItem" parameterType="java.util.Map">
+        insert into t_checkgroup_checkitem(checkgroup_id,checkitem_id) values (#{checkgroup_id},#{checkitem_id})
+    </insert>
+
+    <select id="findByCondition" parameterType="java.lang.String" resultType="com.youle.pojo.CheckGroup">
+        select * from t_checkgroup
+        <if test="value != null and value.length > 0">
+            where code = #{value} or name = #{value} or helpCode = #{value}
+        </if>
+    </select>
+
+    <select id="findById" parameterType="java.lang.Integer" resultType="com.youle.pojo.CheckGroup">
+        select * from t_checkgroup where id = #{checkGroupId}
+    </select>
+
+    <select id="findCheckItemIdsByCheckGroupId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        select checkitem_id from t_checkgroup_checkitem where checkgroup_id = #{checkGroupId}
+    </select>
+
+    <update id="edit" parameterType="com.youle.pojo.CheckGroup">
+        update t_checkgroup
+        <set>
+            <if test="name != null"> name = #{name},
+            </if>
+            <if test="sex != null"> sex = #{sex},
+            </if>
+            <if test="code != null"> code = #{code},
+            </if>
+            <if test="helpCode != null"> helpCode = #{helpCode},
+            </if>
+            <if test="attention != null"> attention = #{attention},
+            </if>
+            <if test="remark != null"> remark = #{remark},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteAssociation" parameterType="java.lang.Integer">
+        delete from t_checkgroup_checkitem where checkgroup_id = #{id}
+    </delete>
+
+    <delete id="delete" parameterType="java.lang.Integer">
+        delete from t_checkgroup where id = #{checkGroupId}
+    </delete>
+
+    <select id="findAll" resultType="com.youle.pojo.CheckGroup">
+        select * from t_checkgroup
+    </select>
+
+    <select id="findByCheckGruopBySetMealId" parameterType="java.lang.Integer" resultMap="findByIdResultMap">
+        select * from t_checkgroup where id in (select checkgroup_id from t_setmeal_checkgroup where setmeal_id =  #{id})
+    </select>
+</mapper>

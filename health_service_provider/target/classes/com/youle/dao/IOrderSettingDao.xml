@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.youle.dao.IOrderSettingDao">
+    <resultMap id="baseResultMap" type="com.youle.pojo.Order">
+        <id column="id" property="id"/>
+        <result column="member_id" property="memberId"/>
+        <result column="orderDate" property="orderDate"/>
+        <result column="orderType" property="orderType"/>
+        <result column="orderStatus" property="orderStatus"/>
+        <result column="setmeal_id" property="setmealId"/>
+    </resultMap>
+
+    <insert id="add" parameterType="com.youle.pojo.OrderSetting">
+        insert into t_ordersetting (orderDate,number,reservations) values (#{orderDate},#{number},#{reservations});
+    </insert>
+
+    <update id="editNumber" parameterType="com.youle.pojo.OrderSetting">
+        update t_ordersetting set number = #{number} where orderDate = #{orderDate} ;
+    </update>
+
+    <select id="findCountByOrderDate" parameterType="java.util.Date" resultType="java.lang.Long">
+        select count(*) from t_ordersetting where orderDate = #{orderDate};
+    </select>
+
+    <select id="getOrdersettingByMonth" parameterType="java.util.Map" resultType="com.youle.pojo.OrderSetting">
+        select * from t_ordersetting where orderDate between #{begin} and #{end} ;
+    </select>
+
+    <!--更新已预约人数-->
+    <update id="editReservationsByOrderDate" parameterType="com.youle.pojo.OrderSetting">
+        update t_ordersetting set reservations = #{reservations} where orderDate = #{orderDate}
+    </update>
+    <!--根据日期查询预约设置信息-->
+    <select id="findByOrderDate" parameterType="date" resultType="com.youle.pojo.OrderSetting">
+        select * from t_ordersetting where orderDate = #{orderDate}
+    </select>
+
+    <select id="findByCondition" parameterType="string" resultType="com.youle.pojo.OrderVO">
+        select o.`id`,o.`orderDate` ,m.`name`,m.`phoneNumber`,o.`orderType`,o.`orderStatus`,s.`name` as `setmealName`
+        from `t_order` o, `t_member` m,`t_setmeal` s
+        where o.member_id = m.id and o.setmeal_id = s.id
+        <if test="value !=null and value.length > 0">
+            where m.`name` like  concat ("%",#{name},"%");
+        </if>
+    </select>
+
+    <update id="confirm" parameterType="java.lang.Integer">
+        update t_order set orderStatus = '已到诊' where id = #{id}
+    </update>
+
+    <delete id="cancle" parameterType="java.lang.Integer">
+        delete from t_order where id = #{id}
+    </delete>
+</mapper>

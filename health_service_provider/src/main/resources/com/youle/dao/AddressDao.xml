@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.youle.dao.AddressDao">
+
+<select id="selectByCondition" parameterType="java.lang.String" resultType="com.youle.pojo.Address">
+    select * from youle.t_address
+    <if test="value != null and value.length != 0">
+        where address like  concat ("%",concat(#{value}),"%") or name like concat("%",concat(#{value}),"%")
+    </if>
+</select>
+
+<insert id="add" parameterType="com.youle.pojo.Address" >
+    insert into t_address(name,telephone,longitude,img,address,latitude)
+    values
+    (#{name},#{telephone},#{longitude},#{img},#{address},#{latitude})
+</insert>
+
+    <select id="findById" parameterType="java.lang.Integer" resultType="com.youle.pojo.Address">
+        select * from youle.t_address where id = #{id}
+    </select>
+    
+    <update id="edit" parameterType="com.youle.pojo.Address">
+        update t_address
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="name != null">
+                telephone = #{telephone},
+            </if>
+            <if test="name != null">
+                longitude = #{longitude},
+            </if>
+            <if test="name != null">
+                img = #{img},
+            </if>
+            <if test="name != null">
+                address = #{address},
+            </if>
+            <if test="name != null">
+                latitude = #{latitude},
+            </if>
+        </set>
+        where  id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="java.lang.Integer">
+        delete from youle.t_address where id = #{id}
+    </delete>
+</mapper>

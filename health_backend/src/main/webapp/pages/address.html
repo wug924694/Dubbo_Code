@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html xmlns:border="http://www.w3.org/1999/xhtml" xmlns: xmlns:display="http://www.w3.org/1999/xhtml" xmlns:
+      xmlns:width="http://www.w3.org/1999/xhtml">
+<head>
+    <!-- 页面meta -->
+    <meta charset="utf-8">
+    <title>优乐健康</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../plugins/elementui/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- 引入组件库 -->
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script src="../js/vue.js"></script>
+    <script src="../plugins/elementui/index.js"></script>
+    <script src="../js/axios-0.18.0.js"></script>
+
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <style type="text/css">
+        body, html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
+            font-size: 14px;
+        }
+
+        #l-map {
+            height: 500px;
+            width: 100%;
+        }
+
+        #map2 {
+            height: 500px;
+            width: 100%;
+        }
+
+        #r-result {
+            width: 100%;
+        }
+
+        #r-result2 {
+            width: 100%;
+        }
+    </style>
+
+    <script type="text/javascript"
+            src="http://api.map.baidu.com/api?v=2.0&ak=DrYLulxtpeEm9NoPykGto2SCt1EBGCDk"></script>
+
+    <style>
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 178px;
+            height: 178px;
+            line-height: 178px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 178px;
+            height: 178px;
+            display: block;
+        }
+
+        .datatable {
+            position: relative;
+            box-sizing: border-box;
+            -webkit-box-flex: 1;
+            width: 100%;
+            max-width: 100%;
+            font-size: 14px;
+            color: rgb(96, 98, 102);
+            overflow: hidden;
+            flex: 1 1 0%;
+        }
+
+        .datatable td, .datatable th {
+            padding: 12px 0;
+            min-width: 0;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+            position: relative;
+            text-align: left;
+        }
+
+        #allmap {
+            height: 450px;
+            width: 100%;
+            overflow: hidden;
+            font-family: "微软雅黑";
+            border: 1px solid green;
+        }
+
+        /*百度地图搜索框定位*/
+        .tangram-suggestion-main {
+            z-index: 999999;
+        }
+
+        /*设置弹出框样式*/
+        .el-dialog__body {
+            padding: 0px 20px;
+            color: #606266;
+            font-size: 14px;
+        }
+
+        /**/
+        /*.el-input--suffix .el-input__inner {
+            width: 450px;
+        }*/
+    </style>
+</head>
+<body class="hold-transition">
+<div id="app">
+    <div class="content-header">
+        <h1>首页<small>公司分布图</small></h1>
+        <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>公司分布图</el-breadcrumb-item>
+        </el-breadcrumb>
+    </div>
+    <div class="app-container">
+        <template>
+
+                    <div class="filter-container">
+                        <el-input placeholder="公司地址" v-model="pagination.queryString" style="width: 200px;"
+                                  class="filter-item" @keyup.enter.native="handleFilter"></el-input>
+                        <el-button @click="pagination.currentPage=1,findPage()" class="dalfBut">查询</el-button>
+                        <el-button type="primary" class="butT" @click="handleCreate()">新建</el-button>
+                    </div>
+                    <el-table size="small" current-row-key="id" :data="dataList" stripe highlight-current-row>
+                        <el-table-column type="index" align="center" label="序号"></el-table-column>
+                        <el-table-column prop="name" label="公司名称" align="center"></el-table-column>
+                        <el-table-column prop="address" label="公司地址" align="center"></el-table-column>
+
+                        <el-table-column prop="longitude" label="所在经度" align="center"></el-table-column>
+                        <el-table-column prop="latitude" label="所在纬度" align="center"></el-table-column>
+                        <el-table-column label="操作" align="center">
+                            <template slot-scope="scope">
+                                <el-button type="primary" size="mini" @click="handleUpdate(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div class="pagination-container">
+                        <el-pagination
+                                class="pagiantion"
+                                @current-change="handleCurrentChange"
+                                :current-page="pagination.currentPage"
+                                :page-size="pagination.pageSize"
+                                layout="total, prev, pager, next, jumper"
+                                :total="pagination.total">
+                        </el-pagination>
+                    </div>
+                    <!-- 新增标签弹层 -->
+                    <div class="add-form">
+                        <el-dialog title="新增地址" :visible.sync="dialogFormVisible" @opened="createMap1">
+                            <el-form ref="dataAddForm" :model="formData" :rules="rules" label-position="right"
+                                     label-width="100px">
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="体检机构名称" prop="name">
+                                            <el-input v-model="formData.name"/>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="体检机构电话" prop="telephone">
+                                            <el-input v-model="formData.telephone"/>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <el-row>
+                                    <el-col :span="24">
+                                        <el-form-item label="上传图片">
+                                            <el-upload
+                                                    class="avatar-uploader"
+                                                    action="/map/upload.do"
+                                                    :auto-upload="autoUpload"
+                                                    name="imgFile"
+                                                    :show-file-list="false"
+                                                    :on-success="handleAvatarSuccesss"
+                                                    :before-upload="beforeAvatarUpload">
+                                                <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                                            </el-upload>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+
+
+                                <el-row>
+                                    <el-col :span="8">
+                                        <el-form-item label="经度" prop="longitude">
+                                            <el-input v-model="formData.longitude" id="lng"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="8">
+                                        <el-form-item label="纬度" prop="latitude">
+                                            <el-input v-model="formData.latitude" id="lat"/>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="详细地址" prop="address">
+                                            <el-input v-model="formData.address" id="txt"/>
+
+                                        </el-form-item>
+
+                                    </el-col>
+                                       <el-button type="primary" icon="el-icon-search" @click="findditu1">设置定位</el-button>
+                                </el-row>
+
+
+                    <span id="r-result">
+                        <input type="text" id="suggestId" size="20"
+                               style="width:300px;height:30px;display: none" placeholder="请输入地址" /> </span>
+
+                                <div id="searchResultPanel"
+                                     style="border:1px solid #C0C0C0;width:150px;height:auto; display:none;"></div>
+                                <div id="l-map" style="display: none"></div>
+
+
+                                </el-form-item>
+                                </el-col>
+                                </el-row>
+                            </el-form>
+                            <div slot="footer" class="dialog-footer">
+                                <el-button @click="dialogFormVisible = false">取消</el-button>
+                                <el-button type="primary" @click="handleAdd()">确定</el-button>
+                            </div>
+                        </el-dialog>
+
+                    </div>
+    <!-- 编辑标签弹层 -->
+    <div class="add-form">
+        <el-dialog title="修改地址" :visible.sync="dialogFormVisible4Edit" @opened="createMap2">
+            <el-form ref="dataAddForm" :model="tableData" :rules="rules" label-position="right"
+                     label-width="100px">
+                <el-row>
+                    <el-col :span="12">
+                        <el-form-item label="体检机构名称" prop="name">
+                            <el-input v-model="formData.name"/>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <el-row>
+                    <el-col :span="12">
+                        <el-form-item label="体检机构电话" prop="telephone">
+                            <el-input v-model="formData.telephone"/>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <el-row>
+                    <el-col :span="24">
+                        <el-form-item label="上传图片">
+                            <el-upload
+                                    class="avatar-uploader"
+                                    action="/map/upload.do"
+                                    :auto-upload="autoUpload"
+                                    name="imgFile"
+                                    :show-file-list="false"
+                                    :on-success="handleAvatarSuccesss"
+                                    :before-upload="beforeAvatarUpload">
+                                <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                            </el-upload>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <el-row>
+                    <el-col :span="8">
+                        <el-form-item label="经度" prop="longitude">
+                            <el-input v-model="formData.longitude" id="lng"/>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="8">
+                        <el-form-item label="纬度" prop="latitude">
+                            <el-input v-model="formData.latitude" id="lat"/>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+
+                <el-row>
+                    <el-col :span="12">
+                        <el-form-item label="详细地址" prop="address">
+                            <el-input v-model="formData.address" id="txt"/>
+                        </el-form-item>
+                    </el-col>
+                    <el-button type="primary" icon="el-icon-search" @click="findditu2">设置定位</el-button>
+                </el-row>
+
+                <div id="r-result2"><input type="text" id="suggestId2" size="20"
+                                           style="width:300px;height:30px;display: none" placeholder="请输入地址"/>
+
+                </div>
+                <div id="searchResultPanel2"
+                     style="border:1px solid #C0C0C0;width:150px;height:auto; display:none;"></div>
+                <div id="map2" style="display: none"></div>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="dialogFormVisible4Edit = false">取消</el-button>
+                <el-button type="primary" @click="handleEdit()">确定</el-button>
+            </div>
+        </el-dialog>
+    </div>
+
+
+    </template>
+</div>
+</div>
+
+
+</body>
+
+<script>
+    let vue = new Vue({
+        el: '#app',
+        data: {
+            autoUpload: true,//自动上传
+            imageUrl: null,//模型数据，用于上传图片完成后图片预览
+
+            activeName: 'first',
+            pagination: {//分页相关属性
+                currentPage: 1,
+                pageSize: 10,
+                total: 100,
+                queryString: null,
+            },
+
+            dataList: [],//列表数据
+            formData: {},//表单数据
+            tableData: {},//新增和编辑表单中对应的检查项列表数据
+            dialogFormVisible: false,//控制添加窗口显示/隐藏
+            dialogFormVisible4Edit: false,//控制编辑窗口显示/隐藏
+            address_detail: '', //详细地址
+            userlocation: {lng: "", lat: ""}
+        },
+        created() {
+            this.findPage();
+        },
+        methods: {
+            createMap1() {
+                var marker;
+                var zoomSize = 19;
+                var map = new BMap.Map("l-map");
+                var lon = 104.06932;
+                var lat = 30.6001674;
+
+
+                //业务处理，获取业务中的经纬度，有则处理，没有则用默认北京
+                if (typeof getBizPoint == "function") {
+                    var pointJson = getBizPoint();
+                    lon = pointJson.lon;
+                    lat = pointJson.lat;
+                }
+
+                //确定中心位置
+                var point = new BMap.Point(lon, lat);
+                map.centerAndZoom(point, zoomSize);
+
+
+                //标注
+                marker = new BMap.Marker(point);// 创建标注
+                map.addOverlay(marker);             // 将标注添加到地图中
+                marker.enableDragging();           // 可拖拽
+                marker.addEventListener("dragend", setBizValue);
+
+                // 添加带有定位的导航控件
+                var navigationControl = new BMap.NavigationControl({
+                    // 靠左上角位置
+                    anchor: BMAP_ANCHOR_TOP_LEFT,
+                    // LARGE类型
+                    type: BMAP_NAVIGATION_CONTROL_LARGE,
+                    // 启用显示定位
+                    enableGeolocation: true
+                });
+                map.addControl(navigationControl);
+
+                var geoc = new BMap.Geocoder();
+
+
+                //输入地址事件处理 start
+                var ac = new BMap.Autocomplete(    //建立一个自动完成的对象
+                    {
+                        "input": "suggestId"
+                        , "location": map
+                    });
+
+                ac.addEventListener("onhighlight", function (e) {  //鼠标放在下拉列表上的事件
+                    var str = "";
+                    var _value = e.fromitem.value;
+                    var value = "";
+                    if (e.fromitem.index > -1) {
+                        value = _value.province + _value.city + _value.district + _value.street + _value.business;
+                    }
+                    str = "FromItem<br />index = " + e.fromitem.index + "<br />value = " + value;
+
+                    value = "";
+                    if (e.toitem.index > -1) {
+                        _value = e.toitem.value;
+                        value = _value.province + _value.city + _value.district + _value.street + _value.business;
+                    }
+                    str += "<br />ToItem<br />index = " + e.toitem.index + "<br />value = " + value;
+                    G("searchResultPanel").innerHTML = str;
+                });
+
+                var myValue;
+                ac.addEventListener("onconfirm", function (e) {    //鼠标点击下拉列表后的事件
+                    var _value = e.item.value;
+                    myValue = _value.province + _value.city + _value.district + _value.street + _value.business;
+                    G("searchResultPanel").innerHTML = "onconfirm<br />index = " + e.item.index + "<br />myValue = " + myValue;
+
+                    let v3 = document.getElementById("txt");
+                    v3.value = myValue;
+                    v3.dispatchEvent(new Event('input'))
+
+                    setPlace();
+                });
+
+                function setPlace() {
+                    map.clearOverlays();    //清除地图上所有覆盖物
+                    function myFun() {
+                        var pp = local.getResults().getPoi(0).point;    //获取第一个智能搜索的结果
+                        setBizValueForPoint(pp);
+                        map.centerAndZoom(pp, zoomSize);
+                        marker = new BMap.Marker(pp);
+                        marker.enableDragging();           // 可拖拽
+                        map.addOverlay(marker);    //添加标注
+                        marker.addEventListener("dragend", setBizValue);
+                    }
+
+                    var local = new BMap.LocalSearch(map, { //智能搜索
+                        onSearchComplete: myFun
+                    });
+                    local.search(myValue);
+                }
+
+                function G(id) {
+                    return document.getElementById(id);
+                }
+
+                //输入地址事件处理 end
+
+
+                //地址转坐标
+                function addrSearch(serachAddr) {
+                    // 创建地址解析器实例
+                    var myGeo = new BMap.Geocoder();
+                    // 将地址解析结果显示在地图上,并调整地图视野
+                    if (!serachAddr) {
+                        serachAddr = $("#suggestId").val();
+                    }
+                    myGeo.getPoint(serachAddr, function (point) {
+                        if (point) {
+                            setBizValueForPoint(point);
+                            map.clearOverlays();
+                            map.centerAndZoom(point, zoomSize);
+                            marker = new BMap.Marker(point);
+                            marker.enableDragging();           // 可拖拽
+                            map.addOverlay(marker);    //添加标注
+                            marker.addEventListener("dragend", setBizValue);
+                        } else {
+                            console.log("search click no results!")
+                        }
+                    });
+                }
+
+                //业务方法 start
+                //根据事件，设置经纬度和地址
+                function setBizValue(e) {
+                    var point = e.point;
+                    setBizValueForPoint(point);
+                }
+
+                //根据Point，设置经纬度和地址
+                function setBizValueForPoint(point) {
+                    lon = point.lng;
+                    lat = point.lat;
+
+                    geoc.getLocation(point, function (rs) {
+                        var addComp = rs.addressComponents;
+                        addr = addComp.province + addComp.city + addComp.district + addComp.street + addComp.streetNumber;
+                        if (typeof setBizFun == "function") {
+                            setBizFun({lon: lon, lat: lat, addr: addr});
+                        }
+                    });
+
+                    let v1 = document.getElementById("lng");
+                    v1.value = lon;
+                    v1.dispatchEvent(new Event('input'))
+
+                    let v2 = document.getElementById("lat");
+                    v2.value = lat;
+                    v2.dispatchEvent(new Event('input'))
+
+                }
+
+                //根据marker，设置经纬度和地址
+                function setBizValueForMarker() {
+                    var point = marker.getPosition();
+                    setBizValueForPoint(point);
+                }
+            },
+            createMap2() {
+                var marker;
+                var zoomSize = 18;
+                var map = new BMap.Map("map2");
+                var lon = this.formData.longitude;  //默认为宁波市
+                var lat = this.formData.latitude;
+
+                //业务处理，获取业务中的经纬度，有则处理，没有则用默认北京
+                if (typeof getBizPoint == "function") {
+                    var pointJson = getBizPoint();
+                    lon = pointJson.lon;
+                    lat = pointJson.lat;
+                }
+
+                //确定中心位置
+                var point = new BMap.Point(lon, lat);
+                map.centerAndZoom(point, zoomSize);
+
+
+                //标注
+                marker = new BMap.Marker(point);// 创建标注
+                map.addOverlay(marker);             // 将标注添加到地图中
+                marker.enableDragging();           // 可拖拽
+                marker.addEventListener("dragend", setBizValue);
+
+                // 添加带有定位的导航控件
+                var navigationControl = new BMap.NavigationControl({
+                    // 靠左上角位置
+                    anchor: BMAP_ANCHOR_TOP_LEFT,
+                    // LARGE类型
+                    type: BMAP_NAVIGATION_CONTROL_LARGE,
+                    // 启用显示定位
+                    enableGeolocation: true
+                });
+                map.addControl(navigationControl);
+
+                var geoc = new BMap.Geocoder();
+
+
+                //输入地址事件处理 start
+                var ac = new BMap.Autocomplete(    //建立一个自动完成的对象
+                    {
+                        "input": "suggestId2"
+                        , "location": map
+                    });
+
+                ac.addEventListener("onhighlight", function (e) {  //鼠标放在下拉列表上的事件
+                    var str = "";
+                    var _value = e.fromitem.value;
+                    var value = "";
+                    if (e.fromitem.index > -1) {
+                        value = _value.province + _value.city + _value.district + _value.street + _value.business;
+                    }
+                    str = "FromItem<br />index = " + e.fromitem.index + "<br />value = " + value;
+
+                    value = "";
+                    if (e.toitem.index > -1) {
+                        _value = e.toitem.value;
+                        value = _value.province + _value.city + _value.district + _value.street + _value.business;
+                    }
+                    str += "<br />ToItem<br />index = " + e.toitem.index + "<br />value = " + value;
+                    G("searchResultPanel2").innerHTML = str;
+                });
+
+                var myValue;
+                ac.addEventListener("onconfirm", function (e) {    //鼠标点击下拉列表后的事件
+                    var _value = e.item.value;
+                    myValue = _value.province + _value.city + _value.district + _value.street + _value.business;
+                    G("searchResultPanel2").innerHTML = "onconfirm<br />index = " + e.item.index + "<br />myValue = " + myValue;
+
+                    let v3 = document.getElementById("txt");
+                    v3.value = myValue;
+                    v3.dispatchEvent(new Event('input'))
+
+                    setPlace();
+                });
+
+                function setPlace() {
+                    map.clearOverlays();    //清除地图上所有覆盖物
+                    function myFun() {
+                        var pp = local.getResults().getPoi(0).point;    //获取第一个智能搜索的结果
+                        setBizValueForPoint(pp);
+                        map.centerAndZoom(pp, zoomSize);
+                        marker = new BMap.Marker(pp);
+                        marker.enableDragging();           // 可拖拽
+                        map.addOverlay(marker);    //添加标注
+                        marker.addEventListener("dragend", setBizValue);
+                    }
+
+                    var local = new BMap.LocalSearch(map, { //智能搜索
+                        onSearchComplete: myFun
+                    });
+                    local.search(myValue);
+                }
+
+                function G(id) {
+                    return document.getElementById(id);
+                }
+
+                //输入地址事件处理 end
+
+                //地址转坐标
+                function addrSearch(serachAddr) {
+                    // 创建地址解析器实例
+                    var myGeo = new BMap.Geocoder();
+                    // 将地址解析结果显示在地图上,并调整地图视野
+                    if (!serachAddr) {
+                        serachAddr = $("#suggestId2").val();
+                    }
+                    myGeo.getPoint(serachAddr, function (point) {
+                        if (point) {
+                            setBizValueForPoint(point);
+                            map.clearOverlays();
+                            map.centerAndZoom(point, zoomSize);
+                            marker = new BMap.Marker(point);
+                            marker.enableDragging();           // 可拖拽
+                            map.addOverlay(marker);    //添加标注
+                            marker.addEventListener("dragend", setBizValue);
+                        } else {
+                            console.log("search click no results!")
+                        }
+                    });
+                }
+
+                //业务方法 start
+                //根据事件，设置经纬度和地址
+                function setBizValue(e) {
+                    var point = e.point;
+                    setBizValueForPoint(point);
+                }
+
+                //根据Point，设置经纬度和地址
+                function setBizValueForPoint(point) {
+                    lon = point.lng;
+                    lat = point.lat;
+
+                    geoc.getLocation(point, function (rs) {
+                        var addComp = rs.addressComponents;
+                        addr = addComp.province + addComp.city + addComp.district + addComp.street + addComp.streetNumber;
+                        if (typeof setBizFun == "function") {
+                            setBizFun({lon: lon, lat: lat, addr: addr});
+                        }
+                    });
+
+                    let v1 = document.getElementById("lng");
+                    v1.value = lon;
+                    v1.dispatchEvent(new Event('input'))
+
+                    let v2 = document.getElementById("lat");
+                    v2.value = lat;
+                    v2.dispatchEvent(new Event('input'))
+
+                }
+
+                //根据marker，设置经纬度和地址
+                function setBizValueForMarker() {
+                    var point = marker.getPosition();
+                    setBizValueForPoint(point);
+                }
+            },
+            //分页查询
+            findPage() {
+                if (this.pagination.queryString != null && this.pagination.queryString !== "") {
+                    let param = {
+                        currentPage: 1,//页码
+                        pageSize: this.pagination.pageSize,
+                        queryString: this.pagination.queryString
+                    };
+                    axios.post("/map/findPage.do", param).then((response) => {
+                        this.dataList = response.data.rows;
+                        this.pagination.total = response.data.total;
+                    });
+                } else {
+                    let param = {
+                        currentPage: this.pagination.currentPage,//页码
+                        pageSize: this.pagination.pageSize,
+                        queryString: this.pagination.queryString
+                    };
+                    axios.post("/map/findPage.do", param).then((response) => {
+                        this.dataList = response.data.rows;
+                        this.pagination.total = response.data.total;
+                    });
+                }
+            },
+
+            // 重置表单
+            resetForm() {
+                this.formData = {};
+                this.imageUrl = null;
+            },
+            // 弹出添加窗口
+            handleCreate() {
+                //弹出新增窗口
+                this.dialogFormVisible = true;
+                //调用重置表单
+                this.resetForm();
+
+            },
+            // 弹出编辑窗口
+            handleUpdate(row) {
+                this.resetForm();
+                this.dialogFormVisible4Edit = true;
+                axios.get("/map/findById.do?id=" + row.id).then((resp) => {
+                    if (resp.data.flag) {
+                        this.formData = resp.data.data;
+                        this.imageUrl = 'http://qgmj8eg1u.hd-bkt.clouddn.com/' + resp.data.data.img
+                    } else {
+                        this.$message.error(resp.data.message)
+                    }
+                })
+            },
+            //编辑
+            handleEdit(){
+                axios.post("/map/edit.do",this.formData).then((res)=>{
+                    if(res.data.flag){
+                        this.$message({
+                            type:'success',
+                            message:res.data.message
+                        })
+                    }else {
+                        this.$message.error(res.data.message)
+                    }
+                }).finally(()=>{
+                    this.findPage();
+                    //隐藏编辑窗口
+                    this.dialogFormVisible4Edit = false;
+                })
+            },
+            findditu1() {
+                let element = document.getElementById("l-map");
+                let element1 = document.getElementById("suggestId");
+                if (element.style.display=="none"){
+                    element.style.display = "";
+                    element1.style.display="";
+                    this.createMap1();
+                }else {
+                    element.style.display="none";
+                    element1.style.display="none";
+                }
+            },
+            findditu2() {
+                let element = document.getElementById("map2");
+                let element1 = document.getElementById("suggestId2");
+                if (element.style.display=="none"){
+                    element.style.display = "";
+                    element1.style.display="";
+                    this.createMap1();
+                }else {
+                    element.style.display="none";
+                    element1.style.display="none";
+                }
+            },
+
+            //切换页码
+            handleCurrentChange(currentPage) {
+                this.pagination.currentPage = currentPage;
+                this.findPage();
+            },
+            // 删除
+            handleDelete(row) {
+                this.$confirm("你确定要删除当前数据吗？", "提示", {
+                    type: 'warning'
+                }).then(() => {
+                    axios.get("/map/delete.do?id=" + row.id).then((resp) => {
+                        if (resp.data.flag) {
+                            this.$message({
+                                type: 'succss',
+                                message: resp.data.message
+                            });
+
+                        } else {
+                            this.$message.error(resp.data.message);
+                        }
+                    }).finally((resp => {
+                        this.findPage();
+                    }));
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: "操作取消"
+                    })
+                })
+            },
+            handleAdd() {
+                this.$refs['dataAddForm'].validate((valid) => {
+                    this.$forceUpdate()
+                    //表单校验
+                    if (valid) {
+                        //表单校验通过，发送ajax请求，讲录入的数据提交到后台进行处理
+                        axios.post("/map/add.do", this.formData).then((response) => {
+                            //先把提交框关闭，然后发送请求和表单参数，
+                            this.dialogFormVisible = false;
+                            // 接收判断后端传过来的flag是否为true，执行成功，
+                            if (response.data.flag) {
+                                //新增成功后，重新调用分页查询方法，查询出最新的数据
+                                this.findPage();
+                                //成功的提示信息
+                                this.$message({
+                                    message: response.data.message,
+                                    type: 'success',
+                                });
+                            } else {
+                                //不通过
+                                this.$message.error(response.data.message);
+                            }
+                        }).finally(() => {
+                            this.findPage();
+                        });
+                    } else {
+                        this.$message.error("表单数据校验失败,请检查输入信息是否正确");
+                        return false;
+                    }
+                })
+            },
+            handleClick(tab, event) {
+
+            },
+            handleAvatarSuccesss(response, file) {
+                //我模型数据ImgaeUrl赋值，用于预览
+                /*  this.imageUrl='http://qfjm1t11q.hd-bkt.clouddn.com/'+response.data;*/
+                this.imageUrl = 'http://qgmj8eg1u.hd-bkt.clouddn.com/' + response.data;
+                this.$message({
+                    type: response.flag ? 'success' : 'error',
+                    message: response.message
+                });
+                this.formData.img = response.data;
+            },
+            //上传图片之前执行
+            beforeAvatarUpload(file) {
+                const isJPG = file.type === 'image/jpeg';
+                const isLt2M = file.size / 1024 / 1024 < 2;
+                if (!isJPG) {
+                    this.$message.error('上传套餐图片只能是 JPG 格式!');
+                }
+                if (!isLt2M) {
+                    this.$message.error('上传套餐图片大小不能超过 2MB!');
+                }
+                return isJPG && isLt2M;
+            },
+
+
+        }
+    });
+</script>
+</html>

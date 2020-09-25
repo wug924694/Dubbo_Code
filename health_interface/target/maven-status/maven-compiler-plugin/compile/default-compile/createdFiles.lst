@@ -1,0 +1,10 @@
+com\youle\service\UserService.class
+com\youle\service\ISetmealService.class
+com\youle\service\ReportService.class
+com\youle\service\MemberService.class
+com\youle\service\RoleService.class
+com\youle\service\PermissionService.class
+com\youle\service\ICheckGroupService.class
+com\youle\service\IOrderService.class
+com\youle\service\IOrderSettingService.class
+com\youle\service\AddressService.class

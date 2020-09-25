@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.youle.dao.PermissionDao" >
+    <select id="findByRoleId" parameterType="java.lang.Integer" resultType="com.youle.pojo.Permission">
+        select * from t_permission where id in(select permission_id from t_role_permission where role_id = #{roleId} )
+    </select>
+
+    <select id="findByCondition" parameterType="java.lang.String" resultType="com.youle.pojo.Permission">
+        select * from t_permission
+        <if test="value != null and value.length != 0">
+            where  name like concat (%,#{name},%)
+        </if>
+    </select>
+
+    <insert id="add" parameterType="com.youle.pojo.Permission">
+        insert into youle.t_permission (name,keyword,description) values (#{name},#{keyword},#{description});
+    </insert>
+
+    <select id="findAll" resultType="com.youle.pojo.Permission">
+        select * from t_permission
+    </select>
+
+    <select id="findById" parameterType="java.lang.Integer" resultType="com.youle.pojo.Permission">
+        select  * from t_permission where id = #{id}
+    </select>
+</mapper>

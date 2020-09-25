@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.youle.dao.ISetmealDao">
+
+    <resultMap type="com.youle.pojo.Setmeal" id="baseResultMap">
+        <id property="id" column="id"></id>
+        <result property="name" column="name"></result>
+        <result property="code" column="code"></result>
+        <result property="helpCode" column="helpCode"></result>
+        <result property="sex" column="sex"></result>
+        <result property="age" column="age"></result>
+        <result property="price" column="price"></result>
+        <result property="remark" column="remark"></result>
+        <result property="attention" column="attention"></result>
+        <result property="img" column="img"></result>
+    </resultMap>
+
+    <resultMap id="findByIdResultMap" type="com.youle.pojo.Setmeal" extends="baseResultMap">
+        <!--多对多映射-->
+        <collection property="checkGroups" ofType="com.youle.pojo.CheckGroup"
+                    select="com.youle.dao.ICheckGroupDao.findByCheckGruopBySetMealId" column="id">
+
+        </collection>
+    </resultMap>
+
+
+    <insert id="add" parameterType="com.youle.pojo.Setmeal">
+        <selectKey resultType="java.lang.Integer" keyProperty="id" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into t_setmeal (code,name,sex,age,helpCode,price,remark,attention,img) values (#{code},#{name},#{sex},#{age},#{helpCode},#{price},#{remark},#{attention},#{img})
+    </insert>
+
+    <insert id="addSetmealAndCheckGroup" parameterType="java.util.Map">
+        insert into t_setmeal_checkgroup(setmeal_id,checkgroup_id) values (#{setmeal_id},#{checkgroup_id})
+    </insert>
+
+    <select id="findAll" resultType="com.youle.pojo.Setmeal">
+        select  * from  t_setmeal
+    </select>
+
+    <select id="findByCondition" parameterType="java.lang.String" resultType="com.youle.pojo.Setmeal">
+        select * from t_setmeal
+        <if test="value != null and value.length > 0" >
+            where code = #{value } or name = #{value} or  helpCode = #{value}
+        </if>
+    </select>
+
+    <select id="findCheckGroupIdsBySetmealId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        select checkgroup_id from t_setmeal_checkgroup where setmeal_id = #{id}
+    </select>
+
+    <delete id="deleteAssociation" parameterType="java.lang.Integer">
+        delete from t_setmeal_checkgroup where setmeal_id = #{id}
+    </delete>
+
+    <delete id="delete" parameterType="java.lang.Integer">
+        delete from t_setmeal where id = #{id}
+    </delete>
+
+    <update id="edit" parameterType="com.youle.pojo.Setmeal">
+        update t_setmeal
+        <set>
+            <if test="name != null"> name = #{name},
+            </if>
+            <if test="code != null"> code = #{code},
+            </if>
+            <if test="helpCode != null"> helpCode = #{helpCode},
+            </if>
+            <if test="sex != null"> sex = #{sex},
+            </if>
+            <if test="age != null"> img = #{age},
+            </if>
+            <if test="price != null"> price = #{price},
+            </if>
+            <if test="remark != null"> remark = #{remark},
+            </if>
+            <if test="attention != null"> attention = #{attention},
+            </if>
+            <if test="img != null"> img = #{img}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="findById" parameterType="java.lang.Integer" resultMap="findByIdResultMap">
+        select * from t_setmeal where id = #{id};
+    </select>
+
+    <select id="findSetMealCount" resultType="map">
+        select s.name,count(o.id) value from t_order o,t_setmeal s where o.setmeal_id = s.id group by s.name ;
+    </select>
+</mapper>

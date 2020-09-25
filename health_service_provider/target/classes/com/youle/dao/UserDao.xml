@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.youle.dao.UserDao" >
+    <select id="findByUsername" parameterType="java.lang.String" resultType="com.youle.pojo.User">
+        select * from t_user where username = #{username};
+    </select>
+
+    <select id="findByCondition" parameterType="java.lang.String" resultType="com.youle.pojo.User">
+        select * from t_user
+        <if test="value != null and value.length != 0">
+            where  username like concat (%,#{username},%)
+        </if>
+    </select>
+
+    <insert id="add" parameterType="com.youle.pojo.User">
+        insert into youle.t_user (username,password,birthday,gender,remark,station,telephone) values (#{username},#{password},#{birthday},#{gender},#{remark},#{station},#{telephone} );
+    </insert>
+
+    <select id="findRoleIdsByUserId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+        select role_id from t_user_role where user_id = #{userId}
+    </select>
+
+    <insert id="addUserAndRole" parameterType="java.util.Map">
+        insert into t_user_role (user_id,role_id) values (#{user_id},#{role_id});
+    </insert>
+
+    <select id="findById" parameterType="java.lang.Integer" resultType="com.youle.pojo.User">
+        select  * from t_user where id = #{id}
+    </select>
+</mapper>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 页面meta -->
+
+
+    <title>地图</title>
+
+
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../../../../../health_backend/src/main/webapp/plugins/elementui/index.css">
+    <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min(1).css">
+    <link rel="stylesheet" href="../../../../../health_backend/src/main/webapp/css/style.css">
+
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>批量地址</title>
+    <style type="text/css">
+        body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+        #l-map{height:500px;width:100%;}
+        #r-result{width:100%; font-size:14px;line-height:20px;}
+    </style>
+
+    <script type="text/javascript" src="//api.map.baidu.com/api?v=2.0&ak=DrYLulxtpeEm9NoPykGto2SCt1EBGCDk"></script>
+
+
+
+
+
+</head>
+
+
+
+
+
+<body>
+
+<div id="app">
+
+    <div id="l-map"></div>
+    <div id="r-result">
+        <input type="button" value="点击查询预约诊所" onclick="bdGEO()"  />
+        <div id="result"></div>
+    </div>
+
+</div>
+</body>
+<!-- 引入组件库 -->
+<script src="../../../../../health_backend/src/main/webapp/js/vue.js"></script>
+<script src="../../../../../health_backend/src/main/webapp/plugins/elementui/index.js"></script>
+<script type="text/javascript" src="../../../../../health_backend/src/main/webapp/js/jquery.min.js"></script>
+<script src="../../../../../health_backend/src/main/webapp/js/axios-0.18.0.js"></script>
+
+
+
+
+<script type="text/javascript">
+    // 百度地图API功能
+    var map = new BMap.Map("l-map");
+    map.centerAndZoom(new BMap.Point(104.06932,30.6001674), 19);
+    map.enableScrollWheelZoom(true);
+    var index = 0;
+    var myGeo = new BMap.Geocoder();
+    var adds = [
+
+    ];
+    function bdGEO(){
+        if (index < adds.length) {
+            var add = adds[index];
+            geocodeSearch(add);
+            index++;
+        }
+    }
+    function geocodeSearch(add){
+        if(index < adds.length){
+            setTimeout(window.bdGEO,400);
+        }
+        myGeo.getPoint(add, function(point){
+            if (point) {
+                document.getElementById("result").innerHTML +=  index + "、" + add + ":" + point.lng + "," + point.lat + "</br>";
+                var address = new BMap.Point(point.lng, point.lat);
+                addMarker(address,new BMap.Label(index+":"+add,{offset:new BMap.Size(20,-10)}));
+            }
+        }, "成都市");
+    }
+    // 编写自定义函数,创建标注
+    function addMarker(point,label){
+        var marker = new BMap.Marker(point);
+        map.addOverlay(marker);
+        marker.setLabel(label);
+    }
+
+    $(document).ready(function () {
+        $.ajax({url:"/map/findAllmap.do",success:function(result) {
+                adds =result;
+                /*bdGEO();*/
+            },
+
+        });
+    });
+
+
+</script>
+</html>

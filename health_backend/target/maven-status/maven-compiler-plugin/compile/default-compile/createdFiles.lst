@@ -1,0 +1,9 @@
+com\youle\controller\CheckGroupController.class
+com\youle\controller\SetmealController.class
+com\youle\controller\RoleController.class
+com\youle\security\SpringSecurityUserService.class
+com\youle\controller\OrderSettingController.class
+com\youle\controller\PermissionController.class
+com\youle\controller\ReportController.class
+com\youle\controller\UserController.class
+com\youle\controller\AddressController.class
